@@ -206,6 +206,22 @@ trait ResourceHelperTrait
     }
 
     /**
+     * Get all named (non-blank-node) URI values from a resource property.
+     */
+    protected function getNamedResourceValues(Resource $resource, string $property): array
+    {
+        $values = [];
+
+        foreach ($resource->all($property) as $value) {
+            if ($value instanceof Resource && $value->getUri() && ! $value->isBNode()) {
+                $values[] = $value->getUri();
+            }
+        }
+
+        return $values;
+    }
+
+    /**
      * Get all values from a resource property.
      */
     protected function getResourceValues(Resource $resource, string $property): array

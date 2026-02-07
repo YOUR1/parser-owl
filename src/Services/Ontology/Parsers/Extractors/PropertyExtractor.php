@@ -33,6 +33,12 @@ class PropertyExtractor
         'http://www.w3.org/2002/07/owl#ObjectProperty',
         'http://www.w3.org/2002/07/owl#AnnotationProperty',
         'http://www.w3.org/2002/07/owl#FunctionalProperty',
+        'http://www.w3.org/2002/07/owl#InverseFunctionalProperty',
+        'http://www.w3.org/2002/07/owl#TransitiveProperty',
+        'http://www.w3.org/2002/07/owl#SymmetricProperty',
+        'http://www.w3.org/2002/07/owl#AsymmetricProperty',
+        'http://www.w3.org/2002/07/owl#ReflexiveProperty',
+        'http://www.w3.org/2002/07/owl#IrreflexiveProperty',
     ];
 
     /**
@@ -92,6 +98,8 @@ class PropertyExtractor
                 'range' => $range,
                 'parent_properties' => $this->getResourceValues($propertyResource, 'rdfs:subPropertyOf'),
                 'inverse_of' => $this->getResourceValues($propertyResource, 'owl:inverseOf'),
+                'equivalent_properties' => $this->getResourceValues($propertyResource, 'owl:equivalentProperty'),
+                'property_disjoint_with' => $this->getResourceValues($propertyResource, 'owl:propertyDisjointWith'),
                 'is_functional' => $isFunctional,
                 'metadata' => [
                     'source' => 'easyrdf',
@@ -183,6 +191,8 @@ class PropertyExtractor
                 'range' => $range,
                 'parent_properties' => $this->getXmlElementResources($element, 'rdfs:subPropertyOf'),
                 'inverse_of' => $this->getXmlElementResources($element, 'owl:inverseOf'),
+                'equivalent_properties' => $this->getXmlElementResources($element, 'owl:equivalentProperty'),
+                'property_disjoint_with' => $this->getXmlElementResources($element, 'owl:propertyDisjointWith'),
                 'is_functional' => $isFunctional,
                 'metadata' => [
                     'source' => 'fallback_rdf_xml',

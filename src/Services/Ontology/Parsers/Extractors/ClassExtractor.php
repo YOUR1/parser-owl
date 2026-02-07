@@ -64,6 +64,8 @@ class ClassExtractor
                 'description' => $this->getResourceComment($classResource),
                 'descriptions' => $this->getAllResourceComments($classResource),
                 'parent_classes' => $this->getResourceValues($classResource, 'rdfs:subClassOf'),
+                'equivalent_classes' => $this->getNamedResourceValues($classResource, 'owl:equivalentClass'),
+                'disjoint_with' => $this->getNamedResourceValues($classResource, 'owl:disjointWith'),
                 'metadata' => [
                     'source' => 'easyrdf',
                     'types' => $this->getResourceValues($classResource, 'rdf:type'),
@@ -125,6 +127,8 @@ class ClassExtractor
                 'description' => $this->getXmlElementText($element, 'rdfs:comment'),
                 'descriptions' => $this->getXmlElementTextsWithLang($element, 'rdfs:comment'),
                 'parent_classes' => $this->getXmlElementResources($element, 'rdfs:subClassOf'),
+                'equivalent_classes' => $this->getXmlElementResources($element, 'owl:equivalentClass'),
+                'disjoint_with' => $this->getXmlElementResources($element, 'owl:disjointWith'),
                 'metadata' => [
                     'source' => 'fallback_rdf_xml',
                     'element_name' => $element->getName(),

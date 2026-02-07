@@ -7,8 +7,6 @@ use App\Services\Ontology\Parsers\Contracts\RdfFormatHandlerInterface;
 use App\Services\Ontology\Parsers\Extractors\ClassExtractor;
 use App\Services\Ontology\Parsers\Extractors\PrefixExtractor;
 use App\Services\Ontology\Parsers\Extractors\PropertyExtractor;
-use App\Services\Ontology\Parsers\Extractors\ShapeExtractor;
-use App\Services\Ontology\Parsers\Handlers\JsonLdHandler;
 use App\Services\Ontology\Parsers\Handlers\NTriplesHandler;
 use App\Services\Ontology\Parsers\Handlers\RdfXmlHandler;
 use App\Services\Ontology\Parsers\Handlers\TurtleHandler;
@@ -19,8 +17,8 @@ use App\Services\Ontology\Parsers\ValueObjects\ParsedRdf;
  *
  * This parser uses a handler-extractor pattern to support multiple RDF formats
  * and maintain separation of concerns:
- * - Format handlers: Parse different RDF syntaxes (RDF/XML, Turtle, JSON-LD, N-Triples)
- * - Extractors: Extract semantic entities (prefixes, classes, properties, shapes)
+ * - Format handlers: Parse different RDF syntaxes (RDF/XML, Turtle, N-Triples)
+ * - Extractors: Extract semantic entities (prefixes, classes, properties)
  *
  * Reduced from 1,191 lines to ~260 lines through strategic refactoring.
  */
@@ -31,11 +29,12 @@ class RdfParser implements OntologyParserInterface
      */
     private array $handlers = [];
 
+    protected ?ParsedRdf $lastParsedRdf = null;
+
     public function __construct(
         private readonly PrefixExtractor $prefixExtractor,
         private readonly ClassExtractor $classExtractor,
         private readonly PropertyExtractor $propertyExtractor,
-        private readonly ShapeExtractor $shapeExtractor
     ) {
         $this->registerDefaultHandlers();
     }
@@ -51,6 +50,7 @@ class RdfParser implements OntologyParserInterface
 
             // Parse content into structured RDF representation
             $parsedRdf = $handler->parse($content);
+            $this->lastParsedRdf = $parsedRdf;
 
             // Extract ontology entities using specialized extractors
             return [
@@ -58,7 +58,6 @@ class RdfParser implements OntologyParserInterface
                 'prefixes' => $this->prefixExtractor->extract($parsedRdf),
                 'classes' => $this->classExtractor->extract($parsedRdf),
                 'properties' => $this->propertyExtractor->extract($parsedRdf),
-                'shapes' => $this->shapeExtractor->extract($parsedRdf),
                 'restrictions' => $this->extractGraphRestrictions($parsedRdf),
                 'raw_content' => $content,
             ];
@@ -78,8 +77,7 @@ class RdfParser implements OntologyParserInterface
         return str_starts_with($content, '<?xml') ||
                str_starts_with($content, '<rdf:RDF') ||
                str_starts_with($content, '@prefix') ||
-               str_contains($content, '@prefix') ||
-               (str_starts_with($content, '{') && str_contains($content, '@context'));
+               str_contains($content, '@prefix');
     }
 
     /**
@@ -87,7 +85,7 @@ class RdfParser implements OntologyParserInterface
      */
     public function getSupportedFormats(): array
     {
-        return ['rdf/xml', 'turtle', 'json-ld', 'n-triples', 'rdfa'];
+        return ['rdf/xml', 'turtle', 'n-triples'];
     }
 
     /**
@@ -130,7 +128,6 @@ class RdfParser implements OntologyParserInterface
     {
         // Order matters: more specific formats first
         $this->handlers = [
-            new JsonLdHandler,    // Check JSON-LD first (distinctive @context)
             new TurtleHandler,    // Check Turtle (@prefix is distinctive)
             new NTriplesHandler,  // Check N-Triples (simple triple format)
             new RdfXmlHandler,    // RDF/XML last (can be confused with HTML)
