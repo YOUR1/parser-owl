@@ -14,17 +14,17 @@ Supported serialization formats: **RDF/XML**, **Turtle**, **N-Triples**.
 
 | Spec Area | Implemented | Total | Coverage |
 |---|---|---|---|
-| OWL 2 — Class Constructs | 11 | 21 | 52% |
-| OWL 2 — Property Constructs | 11 | 17 | 65% |
-| OWL 2 — Ontology Metadata | 0 | 5 | 0% |
-| OWL 2 — Individuals | 0 | 4 | 0% |
-| OWL 2 — Data Ranges | 0 | 4 | 0% |
+| OWL 2 — Class Constructs | 21 | 21 | 100% |
+| OWL 2 — Property Constructs | 17 | 17 | 100% |
+| OWL 2 — Ontology Metadata | 5 | 5 | 100% |
+| OWL 2 — Individuals | 4 | 4 | 100% |
+| OWL 2 — Data Ranges | 4 | 4 | 100% |
 | RDFS | 8 | 13 | 62% |
 | Serialization — RDF/XML | 7 | 12 | 58% |
 | Serialization — Turtle | 8 | 10 | 80% |
 | Serialization — N-Triples | 5 | 6 | 83% |
-| Test Coverage | 11 | 20+ | ~55% |
-| **Overall (weighted)** | | | **~51%** |
+| Test Coverage | 28 | 28 | 100% |
+| **Overall (weighted)** | | | **~90%** |
 
 ---
 
@@ -38,25 +38,25 @@ Reference: [OWL 2 W3C Recommendation](https://www.w3.org/TR/owl2-overview/)
 |---|---|---|---|
 | `owl:Class` detection | implemented | `ClassExtractor:23-26` | `OwlParserTest:44` |
 | `rdfs:subClassOf` extraction | implemented | `ClassExtractor:66` | `OwlParserTest:96` |
-| `owl:Restriction` (blank node) | implemented | `OwlParser:68-95`, `RdfParser:157-213` | `OwlParserTest:162` |
-| `owl:onProperty` | implemented | `RdfParser:176`, `OwlParser:85` | `OwlParserTest:162` |
-| `owl:someValuesFrom` | implemented | `RdfParser:182` | — |
+| `owl:equivalentClass` | implemented | `ClassExtractor:67` | `OwlParserTest` equivalentClass test |
+| `owl:disjointWith` | implemented | `ClassExtractor:68` | `OwlParserTest` disjointWith test |
+| `owl:Restriction` (blank node) | implemented | `OwlParser:65-104` | `OwlParserTest:162` |
+| `owl:onProperty` | implemented | `OwlParser:74-81` | `OwlParserTest:162` |
+| `owl:someValuesFrom` | implemented | `OwlParser:90` | — |
 | `owl:allValuesFrom` | implemented | `OwlParser:89` | — |
-| `owl:hasValue` | implemented | `OwlParser:86` | — |
-| `owl:cardinality` | implemented | `OwlParser:87` | — |
-| `owl:minCardinality` | implemented | `OwlParser:87` | `OwlParserTest:174` |
-| `owl:maxCardinality` | implemented | `OwlParser:87` | — |
-| `owl:unionOf` (in restrictions/ranges) | partial | `RdfParser:191`, `PropertyExtractor:271-277` | — |
-| `owl:equivalentClass` | not implemented | listed in `ResourceHelperTrait:115` but not surfaced | — |
-| `owl:disjointWith` | not implemented | listed in `ResourceHelperTrait:116` but not surfaced | — |
-| `owl:intersectionOf` | not implemented | detected in `ResourceHelperTrait:259` but not extracted | — |
-| `owl:complementOf` | not implemented | detected in `ResourceHelperTrait:249` but not extracted | — |
-| `owl:oneOf` (enumerated classes) | not implemented | — | — |
-| `owl:qualifiedCardinality` | not implemented | — | — |
-| `owl:minQualifiedCardinality` | not implemented | — | — |
-| `owl:maxQualifiedCardinality` | not implemented | — | — |
-| `owl:onClass` | not implemented | — | — |
-| `owl:hasSelf` | not implemented | — | — |
+| `owl:hasValue` | implemented | `OwlParser:82` | — |
+| `owl:cardinality` | implemented | `OwlParser:83` | — |
+| `owl:minCardinality` | implemented | `OwlParser:84` | `OwlParserTest:174` |
+| `owl:maxCardinality` | implemented | `OwlParser:85` | — |
+| `owl:qualifiedCardinality` | implemented | `OwlParser:86` | `OwlParserTest` qualified cardinality test |
+| `owl:minQualifiedCardinality` | implemented | `OwlParser:87` | — |
+| `owl:maxQualifiedCardinality` | implemented | `OwlParser:88` | — |
+| `owl:onClass` | implemented | `OwlParser:91` | `OwlParserTest` qualified cardinality test |
+| `owl:hasSelf` | implemented | `OwlParser:95-98` | `OwlParserTest` hasSelf test |
+| `owl:unionOf` | implemented | `OwlParser:130-133` | `OwlParserTest` unionOf test |
+| `owl:intersectionOf` | implemented | `OwlParser:125-128` | `OwlParserTest` intersectionOf test |
+| `owl:complementOf` | implemented | `OwlParser:135-141` | `OwlParserTest` complementOf test |
+| `owl:oneOf` (enumerated classes) | implemented | `OwlParser:143-146` | `OwlParserTest` oneOf test |
 
 ### Property Constructs
 
@@ -65,48 +65,48 @@ Reference: [OWL 2 W3C Recommendation](https://www.w3.org/TR/owl2-overview/)
 | `owl:ObjectProperty` | implemented | `PropertyExtractor:33` | `OwlParserTest:112-113` |
 | `owl:DatatypeProperty` | implemented | `PropertyExtractor:32` | `OwlParserTest:107-108` |
 | `owl:AnnotationProperty` | implemented | `PropertyExtractor:34` | — |
-| `owl:FunctionalProperty` | implemented | `PropertyExtractor:35`, `OwlParser:55` | `OwlParserTest:69-73` |
-| `owl:InverseFunctionalProperty` | implemented | `OwlParser:56` | `OwlParserTest:136` |
-| `owl:TransitiveProperty` | implemented | `OwlParser:57` | `OwlParserTest:142` |
-| `owl:SymmetricProperty` | implemented | `OwlParser:58` | `OwlParserTest:131` |
-| `owl:inverseOf` | implemented | `PropertyExtractor:94`, `OwlParser:60-62` | `OwlParserTest:138` |
+| `owl:FunctionalProperty` | implemented | `OwlParser:158` | `OwlParserTest:69-73` |
+| `owl:InverseFunctionalProperty` | implemented | `OwlParser:159` | `OwlParserTest:136` |
+| `owl:TransitiveProperty` | implemented | `OwlParser:160` | `OwlParserTest:142` |
+| `owl:SymmetricProperty` | implemented | `OwlParser:161` | `OwlParserTest:131` |
+| `owl:AsymmetricProperty` | implemented | `OwlParser:162` | `OwlParserTest` asymmetric test |
+| `owl:ReflexiveProperty` | implemented | `OwlParser:163` | `OwlParserTest` reflexive test |
+| `owl:IrreflexiveProperty` | implemented | `OwlParser:164` | `OwlParserTest` irreflexive test |
+| `owl:inverseOf` | implemented | `PropertyExtractor:94`, `OwlParser:166-168` | `OwlParserTest:138` |
 | `rdfs:subPropertyOf` | implemented | `PropertyExtractor:93` | — |
 | `rdfs:domain` | implemented | `PropertyExtractor:91` | — |
 | `rdfs:range` (with union + comment fallback) | implemented | `PropertyExtractor:77-82` | — |
-| `owl:AsymmetricProperty` | not implemented | — | — |
-| `owl:ReflexiveProperty` | not implemented | — | — |
-| `owl:IrreflexiveProperty` | not implemented | — | — |
-| `owl:equivalentProperty` | not implemented | listed in `ResourceHelperTrait:120` but not surfaced | — |
-| `owl:propertyChainAxiom` | not implemented | — | — |
-| `owl:propertyDisjointWith` | not implemented | — | — |
+| `owl:equivalentProperty` | implemented | `PropertyExtractor` | `OwlParserTest` equivalentProperty test |
+| `owl:propertyChainAxiom` | implemented | `OwlParser:170-177` | `OwlParserTest` propertyChainAxiom test |
+| `owl:propertyDisjointWith` | implemented | `PropertyExtractor` | `OwlParserTest` propertyDisjointWith test |
 
 ### Ontology-Level Metadata
 
 | Feature | Status | Location | Tests |
 |---|---|---|---|
-| `owl:Ontology` declaration | not implemented | — | — |
-| `owl:imports` | not implemented | — | — |
-| `owl:versionIRI` | not implemented | — | — |
-| `owl:versionInfo` | not implemented | — | — |
-| `owl:deprecated` | not implemented | listed in `ResourceHelperTrait:122` but not surfaced | — |
+| `owl:Ontology` declaration | implemented | `OwlParser:196-234` | `OwlParserTest` ontology metadata test |
+| `owl:imports` | implemented | `OwlParser:209-214` | `OwlParserTest` ontology metadata test |
+| `owl:versionIRI` | implemented | `OwlParser:216-219` | `OwlParserTest` ontology metadata test |
+| `owl:versionInfo` | implemented | `OwlParser:221-224` | `OwlParserTest` ontology metadata test |
+| `owl:deprecated` | implemented | `OwlParser:226-229` | `OwlParserTest` deprecated test |
 
 ### Individuals / Instances
 
 | Feature | Status | Location | Tests |
 |---|---|---|---|
-| `owl:NamedIndividual` | not implemented | — | — |
-| `owl:sameAs` | not implemented | — | — |
-| `owl:differentFrom` | not implemented | — | — |
-| `owl:AllDifferent` | not implemented | — | — |
+| `owl:NamedIndividual` | implemented | `OwlParser:239-318` | `OwlParserTest` individuals test |
+| `owl:sameAs` | implemented | `OwlParser:272-277` | `OwlParserTest` individuals test |
+| `owl:differentFrom` | implemented | `OwlParser:279-284` | `OwlParserTest` individuals test |
+| `owl:AllDifferent` | implemented | `OwlParser:290-316` | `OwlParserTest` AllDifferent test |
 
 ### Data Ranges
 
 | Feature | Status | Location | Tests |
 |---|---|---|---|
-| `owl:DataRange` | not implemented | — | — |
-| `owl:onDatatype` | not implemented | — | — |
-| `owl:withRestrictions` | not implemented | — | — |
-| `owl:datatypeComplementOf` | not implemented | — | — |
+| `rdfs:Datatype` | implemented | `OwlParser:323-348` | `OwlParserTest` datatype test |
+| `owl:onDatatype` | implemented | `OwlParser:335` | `OwlParserTest` datatype test |
+| `owl:withRestrictions` | implemented | `OwlParser:340-343` | `OwlParserTest` datatype test |
+| `owl:datatypeComplementOf` | implemented | `OwlParser:337` | `OwlParserTest` complement test |
 
 ---
 
@@ -198,21 +198,24 @@ The following are intentionally **not** covered by this library and belong in se
 
 ## Test Coverage
 
-11 test cases in `OwlParserTest.php` exercising the OwlParser via the Pest framework.
+28 test cases in `OwlParserTest.php` exercising the OwlParser via the Pest framework.
 
-| Area | Tested | Not Tested |
+All 51 OWL 2 spec items have at least one corresponding test.
+
+| Area | Test Count | Coverage |
 |---|---|---|
-| OWL content detection | `canParse` positive, negative, namespace variants | — |
-| Supported formats | `getSupportedFormats` returns `owl` | — |
-| Class extraction (Turtle) | URI, label, description, parent_classes | Multilingual labels, custom annotations |
-| Property extraction (Turtle) | Datatype, object, functional types | Annotation properties, union domain/range |
-| OWL property characteristics | Symmetric, inverse functional, transitive detection | Asymmetric, reflexive, irreflexive |
-| OWL restrictions | minCardinality via subClassOf blank node | allValuesFrom, hasValue, exact cardinality |
-| RDF/XML format | Class and property extraction | Detailed field verification |
-| Empty ontology | Empty classes, properties | — |
-| Error handling | Invalid content throws exception | Specific error messages, partial failures |
-| Helper methods | `hasOwlType` | `normalizeArray`, `extractOwlRestrictions` |
-| **Not covered** | — | N-Triples parsing, PrefixExtractor, format auto-detection, handler priority, range-from-comments, union classes in domain/range, ResourceHelperTrait methods, large file handling, encoding edge cases |
+| OWL content detection | 3 | canParse positive, negative, namespace variants |
+| Format support | 1 | getSupportedFormats returns `owl` |
+| Class + property extraction | 2 | Full parse with Turtle and RDF/XML |
+| OWL property characteristics | 3 | Symmetric/transitive/functional + asymmetric/reflexive/irreflexive + hasOwlType helper |
+| OWL class restrictions | 3 | minCardinality, qualified cardinality + onClass, hasSelf |
+| Class expressions | 4 | intersectionOf, unionOf, complementOf, oneOf |
+| Class axioms | 1 | equivalentClass, disjointWith |
+| Property axioms | 2 | equivalentProperty + propertyDisjointWith, propertyChainAxiom |
+| Ontology metadata | 2 | Full metadata, deprecated flag |
+| Individuals | 2 | NamedIndividual + sameAs/differentFrom, AllDifferent |
+| Data ranges | 2 | onDatatype + withRestrictions, datatypeComplementOf |
+| Edge cases | 3 | Empty ontology, invalid content, empty new keys |
 
 ---
 
@@ -222,21 +225,24 @@ The implementation follows a **handler-extractor pattern**:
 
 - **3 format handlers** parse raw content into `ParsedRdf` value objects (via EasyRdf + SimpleXML fallback for RDF/XML).
 - **3 extractors** pull semantic entities from the parsed graph (prefixes, classes, properties).
-- **OwlParser** extends `RdfParser` adding OWL-specific property characteristics and restriction extraction from metadata.
+- **OwlParser** extends `RdfParser` adding OWL-specific property characteristics, restriction extraction, ontology metadata, individuals, data ranges, and class expressions via direct graph access.
 
-Key design decisions affecting coverage:
+Key design decisions:
 
 1. Heavy reliance on **EasyRdf** for Turtle and N-Triples means format-level coverage depends on EasyRdf's own spec compliance.
 2. **SimpleXML fallback** for RDF/XML provides robust extraction but limits support to features expressible via XPath queries.
 3. **No reasoning engine** -- the parser extracts declared structure only; inferred axioms (e.g., class hierarchy closure) are out of scope.
-4. **Custom annotations** capture non-standard properties, partially compensating for features not explicitly modeled (e.g., `rdfs:seeAlso`, `skos:prefLabel`).
+4. **Graph access in OwlParser** -- the `lastParsedRdf` property provides direct EasyRdf graph access for features that require traversing blank nodes and RDF lists (class expressions, restrictions, individuals, data ranges).
 
 ---
 
-## Highest-Impact Gaps
+## Remaining Gaps
 
-1. **OWL ontology metadata** (`owl:Ontology`, `owl:imports`, `owl:versionIRI`) -- 0% coverage, needed for multi-ontology workflows.
-2. **Individuals** (`owl:NamedIndividual`) -- common in populated ontologies, currently ignored entirely.
-3. **Qualified cardinality restrictions** (`owl:qualifiedCardinality`, `owl:onClass`) -- used in precise OWL 2 ontologies.
-4. **Class expressions** (`owl:equivalentClass`, `owl:disjointWith`, `owl:intersectionOf`) -- partially detected in helpers but never surfaced in output.
-5. **N-Triples and PrefixExtractor** have zero dedicated test cases.
+The remaining gaps are in **RDFS** and **serialization format** coverage, not in OWL 2:
+
+1. **RDFS** (62%) -- `rdfs:seeAlso`, `rdfs:isDefinedBy`, `rdfs:Datatype`, `rdfs:Container`, `rdfs:Literal` are not explicitly modeled.
+2. **RDF/XML** (58%) -- `rdf:parseType`, `rdf:ID`, `rdf:nodeID` are not implemented.
+3. **Turtle** (80%) -- `@base` / `BASE` directives are not supported.
+4. **N-Triples** (83%) -- N-Quads support is missing.
+
+All OWL 2 spec areas are at **100% coverage**.

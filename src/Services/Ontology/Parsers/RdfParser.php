@@ -29,6 +29,8 @@ class RdfParser implements OntologyParserInterface
      */
     private array $handlers = [];
 
+    protected ?ParsedRdf $lastParsedRdf = null;
+
     public function __construct(
         private readonly PrefixExtractor $prefixExtractor,
         private readonly ClassExtractor $classExtractor,
@@ -48,6 +50,7 @@ class RdfParser implements OntologyParserInterface
 
             // Parse content into structured RDF representation
             $parsedRdf = $handler->parse($content);
+            $this->lastParsedRdf = $parsedRdf;
 
             // Extract ontology entities using specialized extractors
             return [

@@ -245,4 +245,426 @@ ex:Parent a owl:Class ;
         expect($method->invoke($this->parser, $metadata, 'owl:FunctionalProperty'))->toBeTrue();
         expect($method->invoke($this->parser, $metadata, 'owl:SymmetricProperty'))->toBeFalse();
     });
+
+    // ── Ontology Metadata ────────────────────────────────────────────
+
+    it('extracts owl:Ontology metadata', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:myOntology a owl:Ontology ;
+    owl:imports ex:other, ex:another ;
+    owl:versionIRI <http://example.org/myOntology/1.0> ;
+    owl:versionInfo "1.0.0" .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result)->toHaveKey('ontology');
+        expect($result['ontology'])->toHaveCount(1);
+
+        $onto = $result['ontology'][0];
+        expect($onto['uri'])->toBe('http://example.org/myOntology');
+        expect($onto['imports'])->toContain('http://example.org/other');
+        expect($onto['imports'])->toContain('http://example.org/another');
+        expect($onto['version_iri'])->toBe('http://example.org/myOntology/1.0');
+        expect($onto['version_info'])->toBe('1.0.0');
+        expect($onto['deprecated'])->toBeFalse();
+    });
+
+    it('extracts owl:deprecated on ontology', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:oldOntology a owl:Ontology ;
+    owl:deprecated "true"^^xsd:boolean .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result['ontology'])->toHaveCount(1);
+        expect($result['ontology'][0]['deprecated'])->toBeTrue();
+    });
+
+    // ── Individuals ──────────────────────────────────────────────────
+
+    it('extracts owl:NamedIndividual with sameAs and differentFrom', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class .
+
+ex:john a owl:NamedIndividual, ex:Person ;
+    rdfs:label "John" ;
+    owl:sameAs ex:johnDoe ;
+    owl:differentFrom ex:jane .
+
+ex:jane a owl:NamedIndividual, ex:Person ;
+    rdfs:label "Jane" .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result)->toHaveKey('individuals');
+        expect($result['individuals'])->toHaveCount(2);
+
+        $john = collect($result['individuals'])->firstWhere('uri', 'http://example.org/john');
+        expect($john)->not->toBeNull();
+        expect($john['label'])->toBe('John');
+        expect($john['types'])->toContain('http://example.org/Person');
+        expect($john['same_as'])->toContain('http://example.org/johnDoe');
+        expect($john['different_from'])->toContain('http://example.org/jane');
+
+        $jane = collect($result['individuals'])->firstWhere('uri', 'http://example.org/jane');
+        expect($jane)->not->toBeNull();
+        expect($jane['label'])->toBe('Jane');
+        expect($jane['same_as'])->toBeEmpty();
+    });
+
+    it('extracts owl:AllDifferent and folds into individuals', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:a a owl:NamedIndividual ;
+    rdfs:label "A" .
+
+ex:b a owl:NamedIndividual ;
+    rdfs:label "B" .
+
+ex:c a owl:NamedIndividual ;
+    rdfs:label "C" .
+
+[] a owl:AllDifferent ;
+    owl:distinctMembers (ex:a ex:b ex:c) .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result['individuals'])->toHaveCount(3);
+
+        $a = collect($result['individuals'])->firstWhere('uri', 'http://example.org/a');
+        expect($a['different_from'])->toContain('http://example.org/b');
+        expect($a['different_from'])->toContain('http://example.org/c');
+
+        $b = collect($result['individuals'])->firstWhere('uri', 'http://example.org/b');
+        expect($b['different_from'])->toContain('http://example.org/a');
+        expect($b['different_from'])->toContain('http://example.org/c');
+    });
+
+    // ── Class Constructs ─────────────────────────────────────────────
+
+    it('extracts equivalentClass and disjointWith', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Human a owl:Class ;
+    rdfs:label "Human" ;
+    owl:equivalentClass ex:Person ;
+    owl:disjointWith ex:Robot .
+
+ex:Person a owl:Class .
+ex:Robot a owl:Class .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $human = collect($result['classes'])->firstWhere('uri', 'http://example.org/Human');
+        expect($human)->not->toBeNull();
+        expect($human['equivalent_classes'])->toContain('http://example.org/Person');
+        expect($human['disjoint_with'])->toContain('http://example.org/Robot');
+    });
+
+    it('extracts owl:intersectionOf class expression', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:WorkingMother a owl:Class ;
+    rdfs:label "Working Mother" ;
+    owl:equivalentClass [
+        owl:intersectionOf (ex:Mother ex:Worker)
+    ] .
+
+ex:Mother a owl:Class .
+ex:Worker a owl:Class .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $wm = collect($result['classes'])->firstWhere('uri', 'http://example.org/WorkingMother');
+        expect($wm)->not->toBeNull();
+        expect($wm['class_expressions'])->toHaveKey('intersection_of');
+        expect($wm['class_expressions']['intersection_of'])->toContain('http://example.org/Mother');
+        expect($wm['class_expressions']['intersection_of'])->toContain('http://example.org/Worker');
+    });
+
+    it('extracts owl:unionOf class expression', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Pet a owl:Class ;
+    rdfs:label "Pet" ;
+    owl:equivalentClass [
+        owl:unionOf (ex:Cat ex:Dog ex:Fish)
+    ] .
+
+ex:Cat a owl:Class .
+ex:Dog a owl:Class .
+ex:Fish a owl:Class .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $pet = collect($result['classes'])->firstWhere('uri', 'http://example.org/Pet');
+        expect($pet)->not->toBeNull();
+        expect($pet['class_expressions'])->toHaveKey('union_of');
+        expect($pet['class_expressions']['union_of'])->toContain('http://example.org/Cat');
+        expect($pet['class_expressions']['union_of'])->toContain('http://example.org/Dog');
+        expect($pet['class_expressions']['union_of'])->toContain('http://example.org/Fish');
+    });
+
+    it('extracts owl:complementOf class expression', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:NotPerson a owl:Class ;
+    rdfs:label "Not Person" ;
+    owl:complementOf ex:Person .
+
+ex:Person a owl:Class .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $np = collect($result['classes'])->firstWhere('uri', 'http://example.org/NotPerson');
+        expect($np)->not->toBeNull();
+        expect($np['class_expressions'])->toHaveKey('complement_of');
+        expect($np['class_expressions']['complement_of'])->toBe('http://example.org/Person');
+    });
+
+    it('extracts owl:oneOf class expression', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Suit a owl:Class ;
+    rdfs:label "Suit" ;
+    owl:oneOf (ex:Hearts ex:Diamonds ex:Clubs ex:Spades) .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $suit = collect($result['classes'])->firstWhere('uri', 'http://example.org/Suit');
+        expect($suit)->not->toBeNull();
+        expect($suit['class_expressions'])->toHaveKey('one_of');
+        expect($suit['class_expressions']['one_of'])->toHaveCount(4);
+        expect($suit['class_expressions']['one_of'])->toContain('http://example.org/Hearts');
+        expect($suit['class_expressions']['one_of'])->toContain('http://example.org/Spades');
+    });
+
+    it('extracts qualified cardinality and onClass restrictions', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:TwoWheeler a owl:Class ;
+    rdfs:label "Two Wheeler" ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasWheel ;
+        owl:qualifiedCardinality "2"^^xsd:nonNegativeInteger ;
+        owl:onClass ex:Wheel
+    ] .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $tw = collect($result['classes'])->firstWhere('uri', 'http://example.org/TwoWheeler');
+        expect($tw)->not->toBeNull();
+        expect($tw['constraints'])->toHaveCount(1);
+
+        $constraint = $tw['constraints'][0];
+        expect($constraint['type'])->toBe('owl:Restriction');
+        expect($constraint['property'])->toBe('http://example.org/hasWheel');
+        expect($constraint['qualified_cardinality'])->toBe('2');
+        expect($constraint['on_class'])->toBe('http://example.org/Wheel');
+    });
+
+    it('extracts owl:hasSelf restriction', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Narcissist a owl:Class ;
+    rdfs:label "Narcissist" ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:loves ;
+        owl:hasSelf "true"^^xsd:boolean
+    ] .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $narc = collect($result['classes'])->firstWhere('uri', 'http://example.org/Narcissist');
+        expect($narc)->not->toBeNull();
+        expect($narc['constraints'])->toHaveCount(1);
+        expect($narc['constraints'][0]['has_self'])->toBeTrue();
+        expect($narc['constraints'][0]['property'])->toBe('http://example.org/loves');
+    });
+
+    // ── Property Constructs ──────────────────────────────────────────
+
+    it('detects asymmetric, reflexive, and irreflexive properties', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:isChildOf a owl:AsymmetricProperty, owl:IrreflexiveProperty, owl:ObjectProperty ;
+    rdfs:label "is child of" ;
+    rdfs:domain ex:Person ;
+    rdfs:range ex:Person .
+
+ex:knows a owl:ReflexiveProperty, owl:ObjectProperty ;
+    rdfs:label "knows" ;
+    rdfs:domain ex:Person ;
+    rdfs:range ex:Person .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $isChildOf = collect($result['properties'])->firstWhere('uri', 'http://example.org/isChildOf');
+        expect($isChildOf)->not->toBeNull();
+        expect($isChildOf['is_asymmetric'])->toBeTrue();
+        expect($isChildOf['is_irreflexive'])->toBeTrue();
+        expect($isChildOf['is_reflexive'])->toBeFalse();
+
+        $knows = collect($result['properties'])->firstWhere('uri', 'http://example.org/knows');
+        expect($knows)->not->toBeNull();
+        expect($knows['is_reflexive'])->toBeTrue();
+        expect($knows['is_asymmetric'])->toBeFalse();
+    });
+
+    it('extracts equivalentProperty and propertyDisjointWith', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:hasFather a owl:ObjectProperty ;
+    rdfs:label "has father" ;
+    owl:equivalentProperty ex:hasDad ;
+    owl:propertyDisjointWith ex:hasMother .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $prop = collect($result['properties'])->firstWhere('uri', 'http://example.org/hasFather');
+        expect($prop)->not->toBeNull();
+        expect($prop['equivalent_properties'])->toContain('http://example.org/hasDad');
+        expect($prop['property_disjoint_with'])->toContain('http://example.org/hasMother');
+    });
+
+    it('extracts owl:propertyChainAxiom', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:hasGrandparent a owl:ObjectProperty ;
+    rdfs:label "has grandparent" ;
+    owl:propertyChainAxiom (ex:hasParent ex:hasParent) .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        $prop = collect($result['properties'])->firstWhere('uri', 'http://example.org/hasGrandparent');
+        expect($prop)->not->toBeNull();
+        expect($prop['property_chain_axiom'])->toHaveCount(2);
+        expect($prop['property_chain_axiom'][0])->toBe('http://example.org/hasParent');
+        expect($prop['property_chain_axiom'][1])->toBe('http://example.org/hasParent');
+    });
+
+    // ── Data Ranges ──────────────────────────────────────────────────
+
+    it('extracts rdfs:Datatype with owl:onDatatype and restrictions', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:AdultAge a rdfs:Datatype ;
+    owl:onDatatype xsd:integer ;
+    owl:withRestrictions (
+        [ xsd:minInclusive "18" ]
+        [ xsd:maxInclusive "150" ]
+    ) .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result)->toHaveKey('data_ranges');
+        expect($result['data_ranges'])->toHaveCount(1);
+
+        $dr = $result['data_ranges'][0];
+        expect($dr['uri'])->toBe('http://example.org/AdultAge');
+        expect($dr['on_datatype'])->toBe('http://www.w3.org/2001/XMLSchema#integer');
+        expect($dr['with_restrictions'])->toHaveCount(2);
+    });
+
+    it('extracts owl:datatypeComplementOf', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:NotInteger a rdfs:Datatype ;
+    owl:datatypeComplementOf xsd:integer .
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result['data_ranges'])->toHaveCount(1);
+        expect($result['data_ranges'][0]['complement_of'])->toBe('http://www.w3.org/2001/XMLSchema#integer');
+    });
+
+    // ── Empty/Edge Cases for New Features ────────────────────────────
+
+    it('returns empty arrays for new keys on empty ontology', function () {
+        $content = '
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# Empty OWL ontology with just prefixes
+        ';
+
+        $result = $this->parser->parse($content);
+
+        expect($result['ontology'])->toBeEmpty();
+        expect($result['individuals'])->toBeEmpty();
+        expect($result['data_ranges'])->toBeEmpty();
+    });
 });
