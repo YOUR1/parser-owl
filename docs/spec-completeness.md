@@ -1,7 +1,14 @@
 # Spec Completeness
 
-> Assessment of parser-owl implementation coverage against W3C specifications.
+> Assessment of parser-owl implementation coverage against W3C OWL 2 and related specifications.
 > Last updated: 2026-02-07
+
+## Scope
+
+This library focuses exclusively on **OWL (Web Ontology Language)** parsing. SHACL and JSON-LD
+are handled by separate repositories (`parser-shacl`, etc.) and are intentionally out of scope here.
+
+Supported serialization formats: **RDF/XML**, **Turtle**, **N-Triples**.
 
 ## Summary
 
@@ -15,13 +22,9 @@
 | RDFS | 8 | 13 | 62% |
 | Serialization — RDF/XML | 7 | 12 | 58% |
 | Serialization — Turtle | 8 | 10 | 80% |
-| Serialization — JSON-LD | 3 | 9 | 33% |
 | Serialization — N-Triples | 5 | 6 | 83% |
-| SHACL — Core Shapes | 7 | 7 | 100% |
-| SHACL — Constraints | 13 | 27 | 48% |
-| SHACL — Advanced | 0 | 3 | 0% |
-| Test Coverage | 11 | 23+ | ~48% |
-| **Overall (weighted)** | | | **~43%** |
+| Test Coverage | 11 | 20+ | ~55% |
+| **Overall (weighted)** | | | **~51%** |
 
 ---
 
@@ -167,22 +170,6 @@ Reference: [Turtle W3C Recommendation](https://www.w3.org/TR/turtle/)
 | `@base` / `BASE` | not implemented | — | — |
 | String escape sequences | not implemented | delegated to EasyRdf (partial) | — |
 
-### JSON-LD
-
-Reference: [JSON-LD 1.1 W3C Recommendation](https://www.w3.org/TR/json-ld11/)
-
-| Feature | Status | Location | Tests |
-|---|---|---|---|
-| `@context` detection | implemented | `JsonLdHandler:23` | — |
-| JSON structure validation | implemented | `JsonLdHandler:30-33` | — |
-| `@context` prefix extraction | implemented | `PrefixExtractor:151-165` | — |
-| `@graph` | not implemented | delegated to EasyRdf | — |
-| `@id` / `@type` processing | not implemented | delegated to EasyRdf | — |
-| Nested / scoped contexts | not implemented | — | — |
-| Remote context fetching | not implemented | — | — |
-| Compaction / Expansion | not implemented | — | — |
-| Framing | not implemented | — | — |
-
 ### N-Triples
 
 Reference: [N-Triples W3C Recommendation](https://www.w3.org/TR/n-triples/)
@@ -198,65 +185,14 @@ Reference: [N-Triples W3C Recommendation](https://www.w3.org/TR/n-triples/)
 
 ---
 
-## SHACL (Shapes Constraint Language)
+## Out of Scope
 
-Reference: [SHACL W3C Recommendation](https://www.w3.org/TR/shacl/)
+The following are intentionally **not** covered by this library and belong in separate repositories:
 
-### Core Shapes
-
-| Feature | Status | Location | Tests |
-|---|---|---|---|
-| `sh:NodeShape` | implemented | `ShapeExtractor:28` | — |
-| `sh:PropertyShape` | implemented | `ShapeExtractor:29` | — |
-| `sh:targetClass` | implemented | `ShapeExtractor:90` | — |
-| `sh:targetNode` | implemented | `ShapeExtractor:91` | — |
-| `sh:targetSubjectsOf` | implemented | `ShapeExtractor:92` | — |
-| `sh:targetObjectsOf` | implemented | `ShapeExtractor:93` | — |
-| `sh:path` | implemented | `ShapeExtractor:94`, `ShapeExtractor:157` | — |
-
-### Constraint Components
-
-| Feature | Status | Location | Tests |
-|---|---|---|---|
-| `sh:minCount` | implemented | `ShapeExtractor:37` | — |
-| `sh:maxCount` | implemented | `ShapeExtractor:38` | — |
-| `sh:datatype` | implemented | `ShapeExtractor:41` | — |
-| `sh:nodeKind` | implemented | `ShapeExtractor:42` | — |
-| `sh:class` | implemented | `ShapeExtractor:43` | — |
-| `sh:node` | implemented | `ShapeExtractor:44` | — |
-| `sh:pattern` | implemented | `ShapeExtractor:40` | — |
-| `sh:minLength` | implemented | `ShapeExtractor:39` | — |
-| `sh:maxLength` | implemented | `ShapeExtractor:39` | — |
-| `sh:minInclusive` | implemented | `ShapeExtractor:45` | — |
-| `sh:maxInclusive` | implemented | `ShapeExtractor:46` | — |
-| `sh:minExclusive` | implemented | `ShapeExtractor:47` | — |
-| `sh:maxExclusive` | implemented | `ShapeExtractor:48` | — |
-| `sh:in` (allowed values) | not implemented | — | — |
-| `sh:hasValue` | not implemented | — | — |
-| `sh:equals` | not implemented | — | — |
-| `sh:disjoint` | not implemented | — | — |
-| `sh:lessThan` | not implemented | — | — |
-| `sh:lessThanOrEquals` | not implemented | — | — |
-| `sh:uniqueLang` | not implemented | — | — |
-| `sh:qualifiedValueShape` | not implemented | — | — |
-| `sh:qualifiedMinCount` | not implemented | — | — |
-| `sh:qualifiedMaxCount` | not implemented | — | — |
-| `sh:closed` / `sh:ignoredProperties` | not implemented | — | — |
-| `sh:or` / `sh:and` / `sh:not` / `sh:xone` | not implemented | — | — |
-| `sh:severity` | not implemented | — | — |
-| `sh:deactivated` | not implemented | — | — |
-
-### Advanced SHACL
-
-| Feature | Status | Location | Tests |
-|---|---|---|---|
-| SPARQL-based constraints | not implemented | — | — |
-| SHACL-AF (Advanced Features) | not implemented | — | — |
-| SHACL rules (`sh:rule`) | not implemented | — | — |
-
-### Limitations
-
-- SHACL extraction from RDF/XML is explicitly skipped (`ShapeExtractor:57-59`); only Turtle, JSON-LD, and N-Triples are supported.
+| Area | Target Repository |
+|---|---|
+| SHACL (Shapes Constraint Language) | `parser-shacl` |
+| JSON-LD format handling | separate JSON-LD library |
 
 ---
 
@@ -273,10 +209,10 @@ Reference: [SHACL W3C Recommendation](https://www.w3.org/TR/shacl/)
 | OWL property characteristics | Symmetric, inverse functional, transitive detection | Asymmetric, reflexive, irreflexive |
 | OWL restrictions | minCardinality via subClassOf blank node | allValuesFrom, hasValue, exact cardinality |
 | RDF/XML format | Class and property extraction | Detailed field verification |
-| Empty ontology | Empty classes, properties, shapes | — |
+| Empty ontology | Empty classes, properties | — |
 | Error handling | Invalid content throws exception | Specific error messages, partial failures |
 | Helper methods | `hasOwlType` | `normalizeArray`, `extractOwlRestrictions` |
-| **Not covered** | — | JSON-LD parsing, N-Triples parsing, SHACL extraction, PrefixExtractor, format auto-detection, handler priority, range-from-comments, union classes in domain/range, ResourceHelperTrait methods, large file handling, encoding edge cases |
+| **Not covered** | — | N-Triples parsing, PrefixExtractor, format auto-detection, handler priority, range-from-comments, union classes in domain/range, ResourceHelperTrait methods, large file handling, encoding edge cases |
 
 ---
 
@@ -284,13 +220,13 @@ Reference: [SHACL W3C Recommendation](https://www.w3.org/TR/shacl/)
 
 The implementation follows a **handler-extractor pattern**:
 
-- **4 format handlers** parse raw content into `ParsedRdf` value objects (via EasyRdf + SimpleXML fallback for RDF/XML).
-- **4 extractors** pull semantic entities from the parsed graph (prefixes, classes, properties, shapes).
+- **3 format handlers** parse raw content into `ParsedRdf` value objects (via EasyRdf + SimpleXML fallback for RDF/XML).
+- **3 extractors** pull semantic entities from the parsed graph (prefixes, classes, properties).
 - **OwlParser** extends `RdfParser` adding OWL-specific property characteristics and restriction extraction from metadata.
 
 Key design decisions affecting coverage:
 
-1. Heavy reliance on **EasyRdf** for Turtle, JSON-LD, and N-Triples means format-level coverage depends on EasyRdf's own spec compliance.
+1. Heavy reliance on **EasyRdf** for Turtle and N-Triples means format-level coverage depends on EasyRdf's own spec compliance.
 2. **SimpleXML fallback** for RDF/XML provides robust extraction but limits support to features expressible via XPath queries.
 3. **No reasoning engine** -- the parser extracts declared structure only; inferred axioms (e.g., class hierarchy closure) are out of scope.
 4. **Custom annotations** capture non-standard properties, partially compensating for features not explicitly modeled (e.g., `rdfs:seeAlso`, `skos:prefLabel`).
@@ -301,6 +237,6 @@ Key design decisions affecting coverage:
 
 1. **OWL ontology metadata** (`owl:Ontology`, `owl:imports`, `owl:versionIRI`) -- 0% coverage, needed for multi-ontology workflows.
 2. **Individuals** (`owl:NamedIndividual`) -- common in populated ontologies, currently ignored entirely.
-3. **JSON-LD advanced features** -- only basic `@context` extraction; no `@graph`, nested contexts, or remote context resolution.
-4. **SHACL logical constraints** (`sh:or`, `sh:and`, `sh:not`) -- needed for real-world validation shapes.
-5. **Test breadth** -- JSON-LD, N-Triples, SHACL, and PrefixExtractor have zero dedicated test cases.
+3. **Qualified cardinality restrictions** (`owl:qualifiedCardinality`, `owl:onClass`) -- used in precise OWL 2 ontologies.
+4. **Class expressions** (`owl:equivalentClass`, `owl:disjointWith`, `owl:intersectionOf`) -- partially detected in helpers but never surfaced in output.
+5. **N-Triples and PrefixExtractor** have zero dedicated test cases.

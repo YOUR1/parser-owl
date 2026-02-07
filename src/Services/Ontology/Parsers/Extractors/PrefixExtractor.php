@@ -69,7 +69,6 @@ class PrefixExtractor
         return match ($format) {
             'turtle', 'ttl' => $this->extractFromTurtle($content),
             'rdf/xml', 'xml' => $this->extractFromRdfXml($content),
-            'json-ld', 'jsonld' => $this->extractFromJsonLd($content),
             default => []
         };
     }
@@ -139,25 +138,6 @@ class PrefixExtractor
         foreach ($namespaces as $prefix => $namespace) {
             if (! empty($prefix) && ! empty($namespace)) {
                 $prefixes[$prefix] = $namespace;
-            }
-        }
-
-        return $prefixes;
-    }
-
-    /**
-     * Extract @context from JSON-LD content
-     */
-    protected function extractFromJsonLd(string $content): array
-    {
-        $prefixes = [];
-        $decoded = json_decode($content, true);
-
-        if (isset($decoded['@context']) && is_array($decoded['@context'])) {
-            foreach ($decoded['@context'] as $key => $value) {
-                if (is_string($value) && filter_var($value, FILTER_VALIDATE_URL)) {
-                    $prefixes[$key] = $value;
-                }
             }
         }
 

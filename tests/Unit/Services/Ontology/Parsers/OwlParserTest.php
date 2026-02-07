@@ -4,7 +4,6 @@ use App\Services\Ontology\Exceptions\OntologyImportException;
 use App\Services\Ontology\Parsers\Extractors\ClassExtractor;
 use App\Services\Ontology\Parsers\Extractors\PrefixExtractor;
 use App\Services\Ontology\Parsers\Extractors\PropertyExtractor;
-use App\Services\Ontology\Parsers\Extractors\ShapeExtractor;
 use App\Services\Ontology\Parsers\OwlParser;
 
 describe('OwlParser', function () {
@@ -13,7 +12,6 @@ describe('OwlParser', function () {
             new PrefixExtractor,
             new ClassExtractor,
             new PropertyExtractor,
-            new ShapeExtractor
         );
     });
 
@@ -75,7 +73,7 @@ ex:hasMother a owl:FunctionalProperty, owl:ObjectProperty ;
 
         $result = $this->parser->parse($content);
 
-        expect($result)->toHaveKeys(['metadata', 'prefixes', 'classes', 'properties', 'shapes', 'raw_content']);
+        expect($result)->toHaveKeys(['metadata', 'prefixes', 'classes', 'properties', 'raw_content']);
 
         // Check metadata
         expect($result['metadata']['type'])->toBe('owl');
@@ -231,7 +229,6 @@ ex:Parent a owl:Class ;
         expect($result['metadata']['type'])->toBe('owl');
         expect($result['classes'])->toBeEmpty();
         expect($result['properties'])->toBeEmpty();
-        expect($result['shapes'])->toBeEmpty();
     });
 
     it('throws exception on invalid content', function () {
