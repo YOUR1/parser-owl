@@ -1,0 +1,14 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S7.2 - DataComplementOf
+# Reference: https://www.w3.org/TR/owl2-syntax/#Complement_of_Data_Ranges
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:NonInteger a rdfs:Datatype ;
+    owl:datatypeComplementOf xsd:integer .

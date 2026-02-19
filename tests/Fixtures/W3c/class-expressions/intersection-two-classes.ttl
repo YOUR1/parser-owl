@@ -1,0 +1,18 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Primer Section 4.1 - ObjectIntersectionOf
+# Reference: https://www.w3.org/TR/owl2-syntax/#Intersection_of_Class_Expressions
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:Mother a owl:Class .
+ex:Worker a owl:Class .
+
+ex:WorkingMother a owl:Class ;
+    owl:equivalentClass [
+        owl:intersectionOf (ex:Mother ex:Worker)
+    ] .

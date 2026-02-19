@@ -1,0 +1,21 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S9.6.2 - AllDifferent
+# Reference: https://www.w3.org/TR/owl2-syntax/#Individual_Inequality
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:Person a owl:Class .
+
+ex:Alice a owl:NamedIndividual , ex:Person ;
+    owl:differentFrom ex:Charlie .
+
+ex:Bob a owl:NamedIndividual , ex:Person .
+ex:Charlie a owl:NamedIndividual , ex:Person .
+
+[] a owl:AllDifferent ;
+    owl:distinctMembers (ex:Alice ex:Bob ex:Charlie) .

@@ -1,0 +1,19 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification Section 8.4.3 - HasValue
+# Test ID: has-value
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:country a owl:ObjectProperty .
+ex:Australia a owl:NamedIndividual .
+
+ex:Australian a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:country ;
+        owl:hasValue ex:Australia
+    ] .

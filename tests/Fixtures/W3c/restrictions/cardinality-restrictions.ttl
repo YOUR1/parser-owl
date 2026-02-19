@@ -1,0 +1,34 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S8.5 - Cardinality Restrictions
+# Reference: https://www.w3.org/TR/owl2-syntax/#Minimum_Cardinality
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:hasChild a owl:ObjectProperty .
+
+ex:Parent a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasChild ;
+        owl:minCardinality "1"^^xsd:nonNegativeInteger
+    ] .
+
+ex:SingleParent a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasChild ;
+        owl:cardinality "1"^^xsd:nonNegativeInteger
+    ] .
+
+ex:SmallFamily a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasChild ;
+        owl:maxCardinality "3"^^xsd:nonNegativeInteger
+    ] .

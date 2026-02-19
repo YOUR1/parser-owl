@@ -1,0 +1,12 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S3 - Ontology Header
+# Reference: https://www.w3.org/TR/owl2-syntax/#Ontology_IRI_and_Version_IRI
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:myOntology a owl:Ontology ;
+    owl:versionIRI <http://example.org/myOntology/v1.0> ;
+    owl:versionInfo "1.0.0" .

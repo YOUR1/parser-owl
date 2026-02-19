@@ -1,0 +1,26 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S9.2 - Property Relationships
+# Reference: https://www.w3.org/TR/owl2-syntax/#Object_Property_Axioms
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:hasParent a owl:ObjectProperty .
+
+ex:hasChild a owl:ObjectProperty ;
+    owl:inverseOf ex:hasParent .
+
+ex:hasFather a owl:ObjectProperty ;
+    owl:equivalentProperty ex:hasDad .
+ex:hasDad a owl:ObjectProperty .
+
+ex:likes a owl:ObjectProperty ;
+    owl:propertyDisjointWith ex:dislikes .
+ex:dislikes a owl:ObjectProperty .
+
+ex:hasGrandparent a owl:ObjectProperty ;
+    owl:propertyChainAxiom (ex:hasParent ex:hasParent) .

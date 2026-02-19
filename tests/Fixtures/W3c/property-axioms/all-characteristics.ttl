@@ -1,0 +1,17 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Structural Specification S8.3 - Property Characteristics
+# Reference: https://www.w3.org/TR/owl2-syntax/#Object_Property_Axioms
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:hasMother a owl:ObjectProperty , owl:FunctionalProperty .
+ex:hasSSN a owl:DatatypeProperty , owl:InverseFunctionalProperty .
+ex:ancestorOf a owl:ObjectProperty , owl:TransitiveProperty .
+ex:marriedTo a owl:ObjectProperty , owl:SymmetricProperty .
+ex:isChildOf a owl:ObjectProperty , owl:AsymmetricProperty , owl:IrreflexiveProperty .
+ex:knows a owl:ObjectProperty , owl:ReflexiveProperty .

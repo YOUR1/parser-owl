@@ -1,0 +1,16 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Primer Section 3 - Class Hierarchy
+# Reference: https://www.w3.org/TR/owl2-primer/#Class_Hierarchies
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:Animal a owl:Class .
+ex:Mammal a owl:Class ;
+    rdfs:subClassOf ex:Animal .
+ex:Dog a owl:Class ;
+    rdfs:subClassOf ex:Mammal .

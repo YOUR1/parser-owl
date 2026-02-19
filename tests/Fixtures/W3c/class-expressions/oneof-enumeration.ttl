@@ -1,0 +1,19 @@
+# W3C OWL 2 Conformance Test Fixture
+# Source: OWL 2 Primer Section 4.4 - ObjectOneOf
+# Reference: https://www.w3.org/TR/owl2-syntax/#Enumeration_of_Individuals
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix ex: <http://example.org/> .
+
+ex:testOntology a owl:Ontology .
+
+ex:Monday a owl:NamedIndividual .
+ex:Tuesday a owl:NamedIndividual .
+ex:Wednesday a owl:NamedIndividual .
+
+ex:Weekday a owl:Class ;
+    owl:equivalentClass [
+        owl:oneOf (ex:Monday ex:Tuesday ex:Wednesday)
+    ] .

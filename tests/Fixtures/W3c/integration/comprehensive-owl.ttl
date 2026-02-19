@@ -1,0 +1,68 @@
+# W3C OWL 2 Conformance Test Fixture - Comprehensive Integration
+# Source: OWL 2 Primer (multiple sections) and Structural Specification
+# Reference: https://www.w3.org/TR/owl2-primer/
+
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+# Ontology header
+ex:familyOntology a owl:Ontology ;
+    owl:versionIRI <http://example.org/familyOntology/v2.0> ;
+    owl:versionInfo "2.0.0" ;
+    owl:imports ex:basePersonOntology .
+
+# Class hierarchy
+ex:Person a owl:Class .
+ex:Parent a owl:Class ;
+    rdfs:subClassOf ex:Person .
+ex:Mother a owl:Class ;
+    rdfs:subClassOf ex:Parent .
+ex:Father a owl:Class ;
+    rdfs:subClassOf ex:Parent .
+
+# Class expressions
+ex:ParentOrGuardian a owl:Class ;
+    owl:equivalentClass [
+        owl:unionOf (ex:Parent ex:Guardian)
+    ] .
+ex:Guardian a owl:Class .
+
+# Disjoint classes
+ex:Mother owl:disjointWith ex:Father .
+
+# Properties
+ex:hasChild a owl:ObjectProperty ;
+    owl:inverseOf ex:hasParent .
+ex:hasParent a owl:ObjectProperty , owl:FunctionalProperty .
+ex:hasAge a owl:DatatypeProperty , owl:FunctionalProperty .
+ex:hasName a owl:DatatypeProperty .
+
+# Restriction
+ex:Parent rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty ex:hasChild ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger
+] .
+
+# Individuals
+ex:Alice a owl:NamedIndividual , ex:Mother ;
+    rdfs:label "Alice" ;
+    ex:hasChild ex:Bob .
+
+ex:Bob a owl:NamedIndividual , ex:Person ;
+    rdfs:label "Bob" ;
+    ex:hasParent ex:Alice .
+
+ex:Charlie a owl:NamedIndividual , ex:Person ;
+    owl:differentFrom ex:Bob .
+
+# Data range
+ex:ValidAge a rdfs:Datatype ;
+    owl:onDatatype xsd:integer ;
+    owl:withRestrictions (
+        [ xsd:minInclusive "0" ]
+        [ xsd:maxInclusive "200" ]
+    ) .
