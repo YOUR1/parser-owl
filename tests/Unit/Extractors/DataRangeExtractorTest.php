@@ -243,4 +243,121 @@ ex:Thing a owl:Class .';
 
         expect($result->metadata['data_ranges'])->toBe([]);
     });
+
+    describe('DataIntersectionOf', function () {
+        it('extracts intersection with two data ranges', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:IntRange a rdfs:Datatype ;
+    owl:intersectionOf (xsd:integer xsd:nonNegativeInteger) .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/IntRange');
+
+            expect($range)->not->toBeNull();
+            expect($range['intersection_of'])->toHaveCount(2);
+            expect($range['intersection_of'])->toContain('http://www.w3.org/2001/XMLSchema#integer');
+            expect($range['intersection_of'])->toContain('http://www.w3.org/2001/XMLSchema#nonNegativeInteger');
+        });
+
+        it('extracts intersection with multiple data ranges', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:ComplexRange a rdfs:Datatype ;
+    owl:intersectionOf (xsd:integer xsd:nonNegativeInteger xsd:int) .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/ComplexRange');
+
+            expect($range['intersection_of'])->toHaveCount(3);
+        });
+    });
+
+    describe('DataUnionOf', function () {
+        it('extracts union with two data ranges', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:NumberOrString a rdfs:Datatype ;
+    owl:unionOf (xsd:integer xsd:string) .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/NumberOrString');
+
+            expect($range)->not->toBeNull();
+            expect($range['union_of'])->toHaveCount(2);
+            expect($range['union_of'])->toContain('http://www.w3.org/2001/XMLSchema#integer');
+            expect($range['union_of'])->toContain('http://www.w3.org/2001/XMLSchema#string');
+        });
+    });
+
+    describe('DataOneOf', function () {
+        it('extracts literal enumeration with multiple values', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:SmallNumbers a rdfs:Datatype ;
+    owl:oneOf ("1"^^xsd:integer "2"^^xsd:integer "3"^^xsd:integer) .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/SmallNumbers');
+
+            expect($range)->not->toBeNull();
+            expect($range['one_of'])->toHaveCount(3);
+            expect($range['one_of'])->toContain('1');
+            expect($range['one_of'])->toContain('2');
+            expect($range['one_of'])->toContain('3');
+        });
+    });
+
+    describe('DatatypeDefinition', function () {
+        it('extracts named datatype with equivalent data range expression', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:MyInteger a rdfs:Datatype ;
+    owl:equivalentClass xsd:integer .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/MyInteger');
+
+            expect($range)->not->toBeNull();
+            expect($range['equivalent_class'])->toBe('http://www.w3.org/2001/XMLSchema#integer');
+        });
+    });
+
+    describe('rdf:langRange facet', function () {
+        it('recognizes rdf:langRange as a facet type', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:EnglishStrings a rdfs:Datatype ;
+    owl:onDatatype rdf:langString ;
+    owl:withRestrictions (
+        [ rdf:langRange "en" ]
+    ) .';
+
+            $result = $this->parser->parse($content);
+            $range = collect_data_range($result->metadata['data_ranges'], 'http://example.org/EnglishStrings');
+
+            expect($range)->not->toBeNull();
+            expect($range['with_restrictions'][0])->toHaveKey('rdf:langRange');
+            expect($range['with_restrictions'][0]['rdf:langRange'])->toBe('en');
+        });
+    });
 });

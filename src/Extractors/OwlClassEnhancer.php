@@ -30,6 +30,8 @@ final class OwlClassEnhancer
 
             $classes[$uri]['equivalent_classes'] = $this->extractEquivalentClasses($resource);
             $classes[$uri]['disjoint_with'] = $this->extractDisjointWith($resource);
+            $classes[$uri]['disjoint_union_of'] = $this->extractDisjointUnionOf($resource);
+            $classes[$uri]['has_key'] = $this->extractHasKey($resource);
             $classes[$uri]['class_expressions'] = $this->extractClassExpressions($resource);
             $classes[$uri]['constraints'] = $this->extractClassConstraints($resource);
 
@@ -141,6 +143,38 @@ final class OwlClassEnhancer
     }
 
     /**
+     * Extract owl:disjointUnionOf member URIs from a class resource.
+     *
+     * @return array<string>
+     */
+    private function extractDisjointUnionOf(Resource $resource): array
+    {
+        /** @var mixed $listNode */
+        $listNode = $resource->get('owl:disjointUnionOf');
+        if ($listNode === null) {
+            return [];
+        }
+
+        return $this->extractListMembers($listNode);
+    }
+
+    /**
+     * Extract owl:hasKey property URIs from a class resource.
+     *
+     * @return array<string>
+     */
+    private function extractHasKey(Resource $resource): array
+    {
+        /** @var mixed $listNode */
+        $listNode = $resource->get('owl:hasKey');
+        if ($listNode === null) {
+            return [];
+        }
+
+        return $this->extractListMembers($listNode);
+    }
+
+    /**
      * Extract class expressions from resource and its owl:equivalentClass blank nodes.
      *
      * @return array<string, string|array<string>>
@@ -230,6 +264,7 @@ final class OwlClassEnhancer
                 'all_values_from' => $this->graphUri($subClass->get('owl:allValuesFrom')),
                 'some_values_from' => $this->graphUri($subClass->get('owl:someValuesFrom')),
                 'on_class' => $this->graphUri($subClass->get('owl:onClass')),
+                'on_data_range' => $this->graphUri($subClass->get('owl:onDataRange')),
                 'has_self' => null,
             ];
 

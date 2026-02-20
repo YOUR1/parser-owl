@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Youri\vandenBogert\Software\ParserOwl\Extractors;
 
+use EasyRdf\Literal;
 use EasyRdf\Resource;
 use Youri\vandenBogert\Software\ParserCore\ValueObjects\ParsedRdf;
 
@@ -17,7 +18,7 @@ final class IndividualExtractor
      *
      * @return array<int, array<string, mixed>>
      */
-    public function extract(ParsedRdf $parsedRdf): array
+    public function extract(ParsedRdf $parsedRdf, bool $includeSkolemizedBlankNodes = false): array
     {
         $graph = $parsedRdf->graph;
         $individuals = [];
@@ -26,8 +27,20 @@ final class IndividualExtractor
             /** @var Resource $resource */
             /** @var string|null $uri */
             $uri = $resource->getUri();
-            if ($uri === null || str_starts_with($uri, '_:')) {
+            if ($uri === null) {
                 continue;
+            }
+
+            $isBlankNode = str_starts_with($uri, '_:');
+
+            if ($isBlankNode && ! $includeSkolemizedBlankNodes) {
+                continue;
+            }
+
+            // Skolemize blank node URI
+            if ($isBlankNode) {
+                $bnodeId = substr($uri, 2); // Remove '_:' prefix
+                $uri = 'urn:bnode:' . $bnodeId;
             }
 
             $typeUris = [];
@@ -47,6 +60,9 @@ final class IndividualExtractor
                 'label' => null,
                 'same_as' => [],
                 'different_from' => [],
+                'properties' => [],
+                'negative_assertions' => [],
+                'is_anonymous' => $isBlankNode,
             ];
 
             /** @var mixed $label */
@@ -68,6 +84,9 @@ final class IndividualExtractor
                     $individual['different_from'][] = $diffUri;
                 }
             }
+
+            // Extract property assertions (object + data properties)
+            $individual['properties'] = $this->extractPropertyAssertions($resource);
 
             $individuals[] = $individual;
         }
@@ -100,6 +119,119 @@ final class IndividualExtractor
                     unset($individual);
                 }
             }
+        }
+
+        // Fold owl:NegativePropertyAssertion into individual negative_assertions
+        $individuals = $this->processNegativeAssertions($individuals, $parsedRdf);
+
+        return $individuals;
+    }
+
+    /** @var array<string> Known OWL/RDF/RDFS predicates to skip when extracting property assertions. */
+    private const SKIP_PREDICATES = [
+        'http://www.w3.org/1999/02/22-rdf-syntax-ns#type',
+        'http://www.w3.org/2000/01/rdf-schema#label',
+        'http://www.w3.org/2000/01/rdf-schema#comment',
+        'http://www.w3.org/2002/07/owl#sameAs',
+        'http://www.w3.org/2002/07/owl#differentFrom',
+    ];
+
+    /**
+     * Extract property assertions (object + data) from an individual resource.
+     *
+     * @return array<string, array<string>>
+     */
+    private function extractPropertyAssertions(Resource $resource): array
+    {
+        /** @var array<string, array<string>> $properties */
+        $properties = [];
+
+        /** @var array<string> $propertyUris */
+        $propertyUris = $resource->propertyUris();
+
+        foreach ($propertyUris as $propUri) {
+            if (in_array($propUri, self::SKIP_PREDICATES, true)) {
+                continue;
+            }
+
+            $values = $resource->all('<' . $propUri . '>');
+            if ($values === []) {
+                continue;
+            }
+
+            /** @var array<string> $propValues */
+            $propValues = [];
+            foreach ($values as $val) {
+                if ($val instanceof Resource) {
+                    $uri = $this->graphUri($val);
+                    if ($uri !== null) {
+                        $propValues[] = $uri;
+                    }
+                } elseif ($val instanceof Literal) {
+                    $propValues[] = (string) $val;
+                }
+            }
+
+            if ($propValues !== []) {
+                $properties[$propUri] = $propValues;
+            }
+        }
+
+        return $properties;
+    }
+
+    /**
+     * Process owl:NegativePropertyAssertion resources and fold into individuals.
+     *
+     * @param array<int, array<string, mixed>> $individuals
+     * @return array<int, array<string, mixed>>
+     */
+    private function processNegativeAssertions(array $individuals, ParsedRdf $parsedRdf): array
+    {
+        $graph = $parsedRdf->graph;
+
+        foreach ($graph->allOfType('owl:NegativePropertyAssertion') as $resource) {
+            /** @var Resource $resource */
+            $sourceUri = $this->graphUri($resource->get('owl:sourceIndividual'));
+            $propertyUri = $this->graphUri($resource->get('owl:assertionProperty'));
+
+            if ($sourceUri === null || $propertyUri === null) {
+                continue;
+            }
+
+            // Determine target value (individual URI or literal)
+            /** @var string|null $targetValue */
+            $targetValue = null;
+            $targetIndividual = $resource->get('owl:targetIndividual');
+            if ($targetIndividual !== null) {
+                $targetValue = $this->graphUri($targetIndividual);
+            }
+
+            if ($targetValue === null) {
+                /** @var mixed $targetVal */
+                $targetVal = $resource->get('owl:targetValue');
+                if ($targetVal !== null) {
+                    $targetValue = (string) $targetVal;
+                }
+            }
+
+            if ($targetValue === null) {
+                continue;
+            }
+
+            // Fold into the matching individual
+            foreach ($individuals as &$individual) {
+                if ($individual['uri'] === $sourceUri) {
+                    /** @var array<string, array<string>> $negAssertions */
+                    $negAssertions = $individual['negative_assertions'];
+                    if (! isset($negAssertions[$propertyUri])) {
+                        $negAssertions[$propertyUri] = [];
+                    }
+                    $negAssertions[$propertyUri][] = $targetValue;
+                    $individual['negative_assertions'] = $negAssertions;
+                }
+            }
+            unset($individual);
         }
 
         return $individuals;

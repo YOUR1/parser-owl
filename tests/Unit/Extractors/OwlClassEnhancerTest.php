@@ -525,4 +525,195 @@ ex:Animal a owl:Class .';
             expect($dog['constraints'][0]['property'])->toBe('http://example.org/hasLegs');
         });
     });
+
+    describe('disjoint union of', function () {
+        it('extracts owl:disjointUnionOf member URIs as array', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Pet a owl:Class ;
+    owl:disjointUnionOf (ex:Cat ex:Dog ex:Fish) .
+ex:Cat a owl:Class .
+ex:Dog a owl:Class .
+ex:Fish a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $pet = $result->classes['http://example.org/Pet'];
+
+            expect($pet)->toHaveKey('disjoint_union_of');
+            expect($pet['disjoint_union_of'])->toHaveCount(3);
+            expect($pet['disjoint_union_of'])->toContain('http://example.org/Cat');
+            expect($pet['disjoint_union_of'])->toContain('http://example.org/Dog');
+            expect($pet['disjoint_union_of'])->toContain('http://example.org/Fish');
+        });
+
+        it('is distinct from owl:unionOf in output', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Pet a owl:Class ;
+    owl:disjointUnionOf (ex:Cat ex:Dog) .
+ex:Cat a owl:Class .
+ex:Dog a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $pet = $result->classes['http://example.org/Pet'];
+
+            expect($pet)->toHaveKey('disjoint_union_of');
+            expect($pet['class_expressions'])->not->toHaveKey('union_of');
+        });
+
+        it('is distinct from owl:disjointWith in output', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Pet a owl:Class ;
+    owl:disjointUnionOf (ex:Cat ex:Dog) .
+ex:Cat a owl:Class .
+ex:Dog a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $pet = $result->classes['http://example.org/Pet'];
+
+            expect($pet)->toHaveKey('disjoint_union_of');
+            expect($pet['disjoint_with'])->toBeEmpty();
+        });
+
+        it('extracts multiple members in disjoint union', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Vehicle a owl:Class ;
+    owl:disjointUnionOf (ex:Car ex:Truck ex:Motorcycle ex:Bicycle) .
+ex:Car a owl:Class .
+ex:Truck a owl:Class .
+ex:Motorcycle a owl:Class .
+ex:Bicycle a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $vehicle = $result->classes['http://example.org/Vehicle'];
+
+            expect($vehicle['disjoint_union_of'])->toHaveCount(4);
+        });
+
+        it('uses full URIs never prefixed', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Pet a owl:Class ;
+    owl:disjointUnionOf (ex:Cat ex:Dog) .
+ex:Cat a owl:Class .
+ex:Dog a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $pet = $result->classes['http://example.org/Pet'];
+
+            foreach ($pet['disjoint_union_of'] as $uri) {
+                expect($uri)->toStartWith('http://');
+                expect($uri)->not->toContain(':Cat');
+                expect($uri)->not->toContain(':Dog');
+            }
+        });
+
+        it('has empty disjoint_union_of array for class without disjoint union', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Animal a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $animal = $result->classes['http://example.org/Animal'];
+
+            expect($animal['disjoint_union_of'])->toBe([]);
+        });
+    });
+
+    describe('has key', function () {
+        it('extracts owl:hasKey property URIs as array', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    owl:hasKey (ex:hasSSN) .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            expect($person)->toHaveKey('has_key');
+            expect($person['has_key'])->toHaveCount(1);
+            expect($person['has_key'])->toContain('http://example.org/hasSSN');
+        });
+
+        it('extracts object property keys', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    owl:hasKey (ex:hasPassport) .
+ex:hasPassport a owl:ObjectProperty .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            expect($person['has_key'])->toContain('http://example.org/hasPassport');
+        });
+
+        it('extracts data property keys', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    owl:hasKey (ex:hasSSN) .
+ex:hasSSN a owl:DatatypeProperty .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            expect($person['has_key'])->toContain('http://example.org/hasSSN');
+        });
+
+        it('extracts mixed object and data property keys', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    owl:hasKey (ex:hasPassport ex:hasSSN) .
+ex:hasPassport a owl:ObjectProperty .
+ex:hasSSN a owl:DatatypeProperty .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            expect($person['has_key'])->toHaveCount(2);
+            expect($person['has_key'])->toContain('http://example.org/hasPassport');
+            expect($person['has_key'])->toContain('http://example.org/hasSSN');
+        });
+
+        it('uses full URIs never prefixed for key properties', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    owl:hasKey (ex:hasSSN) .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            foreach ($person['has_key'] as $uri) {
+                expect($uri)->toStartWith('http://');
+            }
+        });
+
+        it('has empty has_key array for class without key declaration', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:Animal a owl:Class .';
+
+            $result = $this->parser->parse($content);
+            $animal = $result->classes['http://example.org/Animal'];
+
+            expect($animal['has_key'])->toBe([]);
+        });
+    });
 });

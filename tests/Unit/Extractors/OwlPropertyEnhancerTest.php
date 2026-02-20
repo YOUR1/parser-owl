@@ -350,4 +350,201 @@ ex:Narcissist a owl:Class ;
             expect($restriction['has_self'])->toBeTrue();
         });
     });
+
+    describe('qualified data cardinality', function () {
+        it('extracts owl:onDataRange with owl:qualifiedCardinality', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasAge ;
+        owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:integer
+    ] .';
+
+            $result = $this->parser->parse($content);
+
+            expect($result->restrictions)->not->toBeEmpty();
+
+            $restriction = array_values($result->restrictions)[0];
+            expect($restriction['qualified_cardinality'])->toBe('1');
+            expect($restriction['on_data_range'])->toBe('http://www.w3.org/2001/XMLSchema#integer');
+        });
+
+        it('extracts owl:minQualifiedCardinality with owl:onDataRange', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasPhone ;
+        owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:string
+    ] .';
+
+            $result = $this->parser->parse($content);
+            $restriction = array_values($result->restrictions)[0];
+
+            expect($restriction['min_qualified_cardinality'])->toBe('1');
+            expect($restriction['on_data_range'])->toBe('http://www.w3.org/2001/XMLSchema#string');
+        });
+
+        it('extracts owl:maxQualifiedCardinality with owl:onDataRange', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasNickname ;
+        owl:maxQualifiedCardinality "3"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:string
+    ] .';
+
+            $result = $this->parser->parse($content);
+            $restriction = array_values($result->restrictions)[0];
+
+            expect($restriction['max_qualified_cardinality'])->toBe('3');
+            expect($restriction['on_data_range'])->toBe('http://www.w3.org/2001/XMLSchema#string');
+        });
+
+        it('has on_data_range as full URI not prefixed', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasAge ;
+        owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:integer
+    ] .';
+
+            $result = $this->parser->parse($content);
+            $restriction = array_values($result->restrictions)[0];
+
+            expect($restriction['on_data_range'])->toStartWith('http://');
+        });
+
+        it('does not drop qualified data range when present', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasAge ;
+        owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:integer
+    ] .';
+
+            $result = $this->parser->parse($content);
+            $restriction = array_values($result->restrictions)[0];
+
+            expect($restriction['on_data_range'])->not->toBeNull();
+        });
+
+        it('extracts owl:onDataRange in class constraints too', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+
+ex:Person a owl:Class ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:hasAge ;
+        owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+        owl:onDataRange xsd:integer
+    ] .';
+
+            $result = $this->parser->parse($content);
+            $person = $result->classes['http://example.org/Person'];
+
+            expect($person['constraints'][0]['on_data_range'])->toBe('http://www.w3.org/2001/XMLSchema#integer');
+        });
+    });
+
+    describe('AllDisjointProperties', function () {
+        it('extracts pairwise property_disjoint_with from owl:AllDisjointProperties', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:hasParent a owl:ObjectProperty .
+ex:hasSpouse a owl:ObjectProperty .
+ex:hasSibling a owl:ObjectProperty .
+
+_:d a owl:AllDisjointProperties ;
+    owl:members (ex:hasParent ex:hasSpouse ex:hasSibling) .';
+
+            $result = $this->parser->parse($content);
+
+            $parent = $result->properties['http://example.org/hasParent'];
+            $spouse = $result->properties['http://example.org/hasSpouse'];
+            $sibling = $result->properties['http://example.org/hasSibling'];
+
+            expect($parent['property_disjoint_with'])->toContain('http://example.org/hasSpouse');
+            expect($parent['property_disjoint_with'])->toContain('http://example.org/hasSibling');
+            expect($parent['property_disjoint_with'])->toHaveCount(2);
+
+            expect($spouse['property_disjoint_with'])->toContain('http://example.org/hasParent');
+            expect($spouse['property_disjoint_with'])->toContain('http://example.org/hasSibling');
+
+            expect($sibling['property_disjoint_with'])->toContain('http://example.org/hasParent');
+            expect($sibling['property_disjoint_with'])->toContain('http://example.org/hasSpouse');
+        });
+
+        it('supports data property disjointness', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:hasAge a owl:DatatypeProperty .
+ex:hasBirthYear a owl:DatatypeProperty .
+
+_:d a owl:AllDisjointProperties ;
+    owl:members (ex:hasAge ex:hasBirthYear) .';
+
+            $result = $this->parser->parse($content);
+
+            $age = $result->properties['http://example.org/hasAge'];
+            $birth = $result->properties['http://example.org/hasBirthYear'];
+
+            expect($age['property_disjoint_with'])->toContain('http://example.org/hasBirthYear');
+            expect($birth['property_disjoint_with'])->toContain('http://example.org/hasAge');
+        });
+
+        it('merges AllDisjointProperties with existing propertyDisjointWith without duplicates', function () {
+            $content = '@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix ex: <http://example.org/> .
+
+ex:hasParent a owl:ObjectProperty ;
+    owl:propertyDisjointWith ex:hasSpouse .
+ex:hasSpouse a owl:ObjectProperty .
+
+_:d a owl:AllDisjointProperties ;
+    owl:members (ex:hasParent ex:hasSpouse) .';
+
+            $result = $this->parser->parse($content);
+            $parent = $result->properties['http://example.org/hasParent'];
+
+            $spouseCount = count(array_filter(
+                $parent['property_disjoint_with'],
+                fn($uri) => $uri === 'http://example.org/hasSpouse'
+            ));
+            expect($spouseCount)->toBe(1);
+        });
+    });
 });

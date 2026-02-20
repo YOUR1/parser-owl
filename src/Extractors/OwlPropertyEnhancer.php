@@ -73,6 +73,9 @@ final class OwlPropertyEnhancer
         }
         unset($property);
 
+        // Handle owl:AllDisjointProperties (pairwise disjoint)
+        $properties = $this->processAllDisjointProperties($properties, $parsedRdf);
+
         return $properties;
     }
 
@@ -112,6 +115,7 @@ final class OwlPropertyEnhancer
                 'all_values_from' => $this->graphUri($resource->get('owl:allValuesFrom')),
                 'some_values_from' => $this->graphUri($resource->get('owl:someValuesFrom')),
                 'on_class' => $this->graphUri($resource->get('owl:onClass')),
+                'on_data_range' => $this->graphUri($resource->get('owl:onDataRange')),
                 'has_self' => null,
             ];
 
@@ -130,6 +134,44 @@ final class OwlPropertyEnhancer
         }
 
         return $restrictions;
+    }
+
+    /**
+     * Process owl:AllDisjointProperties and add pairwise disjoint relationships.
+     *
+     * @param array<string, array<string, mixed>> $properties
+     * @return array<string, array<string, mixed>>
+     */
+    private function processAllDisjointProperties(array $properties, ParsedRdf $parsedRdf): array
+    {
+        $graph = $parsedRdf->graph;
+
+        foreach ($graph->allOfType('owl:AllDisjointProperties') as $resource) {
+            /** @var Resource $resource */
+            $members = $resource->get('owl:members');
+            if ($members === null) {
+                continue;
+            }
+
+            $memberUris = $this->extractListMembers($members);
+
+            // Add pairwise disjoint relationships
+            foreach ($memberUris as $memberUri) {
+                if (! isset($properties[$memberUri])) {
+                    continue;
+                }
+
+                $others = array_values(array_filter($memberUris, fn (string $u): bool => $u !== $memberUri));
+
+                /** @var array<string> $existing */
+                $existing = $properties[$memberUri]['property_disjoint_with'] ?? [];
+                $properties[$memberUri]['property_disjoint_with'] = array_values(
+                    array_unique(array_merge($existing, $others))
+                );
+            }
+        }
+
+        return $properties;
     }
 
     /**

@@ -48,19 +48,25 @@ class OwlParser extends RdfParser
         ParsedRdf $parsedRdf,
         RdfFormatHandlerInterface $handler,
         string $content,
+        array $options = [],
     ): ParsedOntology {
-        $base = parent::buildParsedOntology($parsedRdf, $handler, $content);
+        $base = parent::buildParsedOntology($parsedRdf, $handler, $content, $options);
 
-        return $this->processOwlFeatures($base, $parsedRdf);
+        return $this->processOwlFeatures($base, $parsedRdf, $options);
     }
 
     /**
      * Apply OWL-specific post-processing to the base RDF parse result.
+     *
+     * @param array<string, string|int|bool|null> $options
      */
     protected function processOwlFeatures(
         ParsedOntology $base,
         ParsedRdf $parsedRdf,
+        array $options = [],
     ): ParsedOntology {
+        $includeSkolemized = (bool) ($options['includeSkolemizedBlankNodes'] ?? false);
+
         $enhancedClasses = $this->owlClassEnhancer->enhance($base->classes, $parsedRdf);
         $enhancedProperties = $this->owlPropertyEnhancer->enhance($base->properties, $parsedRdf);
         $restrictions = $this->owlPropertyEnhancer->extractRestrictions($parsedRdf);
@@ -68,8 +74,9 @@ class OwlParser extends RdfParser
         /** @var array<string, mixed> $enhancedMetadata */
         $enhancedMetadata = $base->metadata;
         $enhancedMetadata['ontology'] = $this->ontologyMetadataExtractor->extract($parsedRdf);
-        $enhancedMetadata['individuals'] = $this->individualExtractor->extract($parsedRdf);
+        $enhancedMetadata['individuals'] = $this->individualExtractor->extract($parsedRdf, $includeSkolemized);
         $enhancedMetadata['data_ranges'] = $this->dataRangeExtractor->extract($parsedRdf);
+        $enhancedMetadata['axiom_annotations'] = $this->ontologyMetadataExtractor->extractAxiomAnnotations($parsedRdf);
 
         return new ParsedOntology(
             classes: $enhancedClasses,
@@ -79,6 +86,7 @@ class OwlParser extends RdfParser
             restrictions: $restrictions,
             metadata: $enhancedMetadata,
             rawContent: $base->rawContent,
+            graphs: $base->graphs,
         );
     }
 }
